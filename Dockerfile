@@ -1,15 +1,16 @@
 FROM node:16-alpine
 
+# Set working directory for the whole container
 WORKDIR /app
 
-# Copy backend files
+# Copy the backend files to the container
 COPY multaqa-backend-main/ ./
 
-# Install dependencies
+# Install dependencies 
 RUN npm install
-
-# Start the server
-CMD ["npm", "start"]
 
 # Expose the port the app runs on
 EXPOSE 5000
+
+# Start the server
+CMD ["npm", "start"]
