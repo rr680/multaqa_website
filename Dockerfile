@@ -15,6 +15,18 @@ COPY multaqa-backend-main/ ./
 # Install Express explicitly in case it's missing from package.json
 RUN npm install express mongoose cors dotenv jsonwebtoken bcryptjs --save
 
+# Create health check route file
+RUN echo 'const express = require("express"); \
+const router = express.Router(); \
+router.get("/health", (req, res) => { \
+  res.status(200).json({ status: "ok", message: "API is healthy" }); \
+}); \
+module.exports = router;' > health.js
+
+# Add health check route to index.js
+RUN echo 'const healthRoutes = require("./health"); \
+app.use("/api", healthRoutes);' >> index.js
+
 # Set environment variables
 ENV MONGODB_URI="mongodb+srv://sherinmostafa:Multaqa%402024@multaqa.fforxrx.mongodb.net/?retryWrites=true&w=majority&appName=multaqa"
 ENV PORT=8080
