@@ -127,7 +127,7 @@ if (process.env.NODE_ENV === 'production') {
         
         // Check if index.html exists before sending it
         const indexPath = path.join(__dirname, 'public', 'index.html');
-        if (require('fs').existsSync(indexPath)) {
+        if (require('node:fs').existsSync(indexPath)) {
             res.sendFile(indexPath);
         } else {
             // Send API documentation or fallback message instead
