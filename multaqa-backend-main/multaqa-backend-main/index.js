@@ -21,6 +21,13 @@ app.use(session({
     }
 }));
 
+// Fix session store for production
+if (process.env.NODE_ENV === 'production') {
+  // If you want to use a more scalable session store, add the appropriate package
+  // For example: npm install connect-redis
+  console.log('Warning: Using MemoryStore for sessions in production is not recommended.');
+}
+
 ////////////Routers//////////////////////////
 const userRouter = require('./src/routers/user.js');
 const eventAttendee = require('./src/routers/event-attendee.js')
@@ -117,7 +124,23 @@ if (process.env.NODE_ENV === 'production') {
             req.url.startsWith('/health')) {
             return next();
         }
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+        
+        // Check if index.html exists before sending it
+        const indexPath = path.join(__dirname, 'public', 'index.html');
+        if (require('fs').existsSync(indexPath)) {
+            res.sendFile(indexPath);
+        } else {
+            // Send API documentation or fallback message instead
+            res.send(`
+                <html>
+                <head><title>Multaqa API</title></head>
+                <body>
+                    <h1>Multaqa API Server</h1>
+                    <p>The API is running successfully, but the frontend is not deployed in this container.</p>
+                </body>
+                </html>
+            `);
+        }
     });
 }
 

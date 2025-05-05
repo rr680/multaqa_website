@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multaqa API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #6F1A07;
+            border-bottom: 2px solid #A8763E;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2B2118;
+            margin-top: 30px;
+        }
+        code {
+            background-color: #ECF0F1;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        pre {
+            background-color: #ECF0F1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .endpoint {
+            border-left: 4px solid #A8763E;
+            padding-left: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Multaqa API Documentation</h1>
+    
+    <p>This server hosts the Multaqa API. The frontend application needs to be deployed separately or accessed through its designated URL.</p>
+    
+    <h2>Key Endpoints</h2>
+
+    <div class="endpoint">
+        <h3>GET /events</h3>
+        <p>Fetch all events</p>
+    </div>
+
+    <div class="endpoint">
+        <h3>GET /health</h3>
+        <p>API health check endpoint</p>
+    </div>
+
+    <h2>Deployment Status</h2>
+    <p>✅ Backend API: Running</p>
+    <p>❌ Frontend: Not deployed in this container</p>
+    
+    <h2>Next Steps</h2>
+    <p>To deploy the frontend:</p>
+    <ul>
+        <li>Build the React application</li>
+        <li>Copy the build files to the public directory of this server, or</li>
+        <li>Deploy the frontend to a separate hosting service</li>
+    </ul>
+</body>
+</html>
