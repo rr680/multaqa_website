@@ -5,14 +5,21 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const app = express();
 
+// Environment variables for deployment
+const PORT = process.env.PORT || 5000;
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://sherinmostafa:Multaqa%402024@multaqa.fforxrx.mongodb.net/?retryWrites=true&w=majority&appName=multaqa";
+const JWT_SECRET = process.env.JWT_SECRET || "arwa500";
 
 ///////////////////session///////
 app.use(session({
-    secret: 'arwa500',
+    secret: JWT_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }
-  }));
+    cookie: { 
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    }
+}));
 
 ////////////Routers//////////////////////////
 const userRouter = require('./src/routers/user.js');
@@ -36,22 +43,26 @@ const attendeeDashboard=require('./src/routers/attendee-likes.js')
 const admin = require('./src/routers/admin.js')
 const deleteRequests = require('./src/routers/deleteRequests.js')
 
-app.use(cors());
-// app.use(bodyParser.json());
+app.use(cors({
+    origin: process.env.FRONTEND_URL || '*',
+    credentials: true
+}));
 
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
-const url = "mongodb+srv://sherinmostafa:Multaqa%402024@multaqa.fforxrx.mongodb.net/?retryWrites=true&w=majority&appName=multaqa";
-
 const connectDB = async () => {
     try {
         mongoose.set('strictQuery', false);
-        mongoose.connect(url);
-        console.log('Connect to Mongo DB');
+        await mongoose.connect(MONGODB_URI, {
+          // Remove deprecated options
+          // The options below are no longer needed in newer Mongoose versions
+          // useNewUrlParser and useUnifiedTopology are default in Mongoose 6+
+        });
+        console.log('Connected to MongoDB');
     } catch (error) {
-        console.log('Error while connecting to Mongo DB ' + error);
-        process.exit();
+        console.error('MongoDB connection error:', error);
+        process.exit(1);
     }
 }
 
@@ -84,11 +95,32 @@ app.use(deleteRequests)
 app.get('/organizer', (req, res) => res.send('Organizer Page'));
 app.get('/events', (req, res) => res.send('Attendee Page'));
 
+// Add a health check endpoint for container orchestration platforms
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
+// biome-ignore lint/style/useNodejsImportProtocol: <explanation>
 const path = require('path');
 
 // Serve static files from the 'uploads' directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.listen(5000, () => {
-    console.log('Server is running on port 5000')
+// Serve static files for frontend if in the same deployment
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Handle SPA routing - always return index.html for non-API routes in production
+if (process.env.NODE_ENV === 'production') {
+    app.get('*', (req, res, next) => {
+        if (req.url.startsWith('/api') || 
+            req.url.startsWith('/uploads') || 
+            req.url.startsWith('/health')) {
+            return next();
+        }
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    });
+}
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on port ${PORT}`);
 });
