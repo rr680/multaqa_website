@@ -26,6 +26,21 @@ RUN grep -q "const healthRoutes" index.js || sed -i '/const express/a const heal
 RUN grep -q "app.use(\"/api\"" index.js || sed -i '/app.use(cors/a app.use("/api", healthRoutes);' index.js
 RUN grep -q "app.use(\"/\"" index.js || sed -i '/app.use(cors/a app.use("/", healthRoutes);' index.js
 
+# Build frontend
+WORKDIR /frontend
+COPY multaqa-frontend-main/ ./
+RUN npm install
+RUN npm run build
+
+# Move built frontend to backend's public directory
+WORKDIR /app
+RUN mkdir -p public
+RUN cp -r /frontend/build/* public/
+
+# Add route to serve static files
+RUN echo 'app.use(express.static("public"));' >> index.js
+RUN echo 'app.get("*", (req, res) => { res.sendFile(path.join(__dirname, "public", "index.html")); });' >> index.js
+
 # Set environment variables
 ENV MONGODB_URI="mongodb+srv://sherinmostafa:Multaqa%402024@multaqa.fforxrx.mongodb.net/?retryWrites=true&w=majority&appName=multaqa"
 ENV PORT=8080
