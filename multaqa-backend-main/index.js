@@ -16,16 +16,14 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Connect to MongoDB using environment variable
-const mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/multaqa";
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
+const mongoURI = process.env.MONGODB_URI;
+mongoose.connect(mongoURI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Use PORT from environment variable (Railway sets this automatically)
-const PORT = process.env.PORT || 5000;
+// Make sure port matches the EXPOSE in Dockerfile
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });

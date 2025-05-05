@@ -15,8 +15,11 @@ COPY multaqa-backend-main/ ./
 # Install Express explicitly in case it's missing from package.json
 RUN npm install express mongoose cors dotenv jsonwebtoken bcryptjs --save
 
-# Expose the port the app runs on
-EXPOSE 3000
+# Set environment variable for MongoDB
+ENV MONGODB_URI="mongodb+srv://your_username:your_password@your_actual_cluster.mongodb.net/multaqa?retryWrites=true&w=majority"
+
+# Expose the port the app is actually running on (8080 not 3000)
+EXPOSE 8080
 
 # Start the server with increased logging
 CMD ["npm", "start"]
