@@ -1,5 +1,6 @@
-node_modules
-npm-debug.log
+**/node_modules
+**/npm-debug.log
 multaqa-frontend-main
-.git
-.gitignore
+**/.git
+**/.gitignore
+**/README.md

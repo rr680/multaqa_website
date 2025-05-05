@@ -1,45 +1,37 @@
-FROM node:16-alpine
+FROM node:16-alpine AS frontend-build
 
-# Set working directory for the whole container
-WORKDIR /app
-
-# Copy package.json and package-lock.json first for better caching
-COPY multaqa-backend-main/package*.json ./
-
-# Install dependencies with proper error output
-RUN npm install --no-optional && npm cache clean --force
-
-# Copy the health check file first
-COPY multaqa-backend-main/health.js ./
-
-# Copy the rest of the backend files
-COPY multaqa-backend-main/ ./
-
-# Install Express explicitly in case it's missing from package.json
-RUN npm install express mongoose cors dotenv jsonwebtoken bcryptjs --save
-
-# Create index.js backup just in case
-RUN cp index.js index.js.bak
-
-# Add health route to index.js if it doesn't exist already
-RUN grep -q "const healthRoutes" index.js || sed -i '/const express/a const healthRoutes = require("./health");' index.js
-RUN grep -q "app.use(\"/api\"" index.js || sed -i '/app.use(cors/a app.use("/api", healthRoutes);' index.js
-RUN grep -q "app.use(\"/\"" index.js || sed -i '/app.use(cors/a app.use("/", healthRoutes);' index.js
-
-# Build frontend
-WORKDIR /frontend
-COPY multaqa-frontend-main/ ./
+# Set working directory for frontend
+WORKDIR /frontend-build
+# Copy frontend files
+COPY multaqa-frontend-main/multaqa-frontend-main/ ./
+# Install and build frontend
 RUN npm install
 RUN npm run build
 
-# Move built frontend to backend's public directory
-WORKDIR /app
-RUN mkdir -p public
-RUN cp -r /frontend/build/* public/
+FROM node:16-alpine
 
-# Add route to serve static files
+# Set working directory for backend
+WORKDIR /app
+# Copy backend package files and install dependencies
+COPY multaqa-backend-main/multaqa-backend-main/package*.json ./
+RUN npm install --no-optional
+
+# Copy backend files
+COPY multaqa-backend-main/multaqa-backend-main/ ./
+
+# Copy built frontend from previous stage
+COPY --from=frontend-build /frontend-build/build ./public
+
+# Install additional required packages
+RUN npm install express mongoose cors dotenv jsonwebtoken bcryptjs path --save
+
+# Configure server to serve frontend and API
+RUN echo 'const path = require("path");' >> index.js
 RUN echo 'app.use(express.static("public"));' >> index.js
-RUN echo 'app.get("*", (req, res) => { res.sendFile(path.join(__dirname, "public", "index.html")); });' >> index.js
+RUN echo 'app.get("*", (req, res) => {' >> index.js
+RUN echo '  if (req.path.startsWith("/api")) return next();' >> index.js
+RUN echo '  res.sendFile(path.join(__dirname, "public", "index.html"));' >> index.js
+RUN echo '});' >> index.js
 
 # Set environment variables
 ENV MONGODB_URI="mongodb+srv://sherinmostafa:Multaqa%402024@multaqa.fforxrx.mongodb.net/?retryWrites=true&w=majority&appName=multaqa"
@@ -47,8 +39,8 @@ ENV PORT=8080
 ENV JWT_SECRET="multaqa-secret-key"
 ENV NODE_ENV=production
 
-# Expose the port the app is actually running on
+# Expose the port
 EXPOSE 8080
 
-# Start the server with increased logging
+# Start the server
 CMD ["node", "index.js"]
