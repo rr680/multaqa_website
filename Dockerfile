@@ -1,34 +1,43 @@
-FROM node:16-alpine AS frontend-build
-
-# Set working directory for frontend
-WORKDIR /frontend-build
-# Copy frontend files
-COPY multaqa-frontend-main/multaqa-frontend-main/ ./
-# Install and build frontend
-RUN npm install
-RUN npm run build
-
+# Use a single stage build to reduce complexity
 FROM node:16-alpine
 
-# Set working directory for backend
+# Set working directory
 WORKDIR /app
-# Copy backend package files and install dependencies
-COPY multaqa-backend-main/multaqa-backend-main/package*.json ./
-RUN npm install --no-optional
+
+# Copy frontend package.json
+COPY multaqa-frontend-main/multaqa-frontend-main/package*.json ./frontend/
+
+# Copy backend package.json
+COPY multaqa-backend-main/multaqa-backend-main/package*.json ./backend/
+
+# Install frontend dependencies
+WORKDIR /app/frontend
+RUN npm install --no-optional || (sleep 5 && npm install --no-optional)
+
+# Install backend dependencies
+WORKDIR /app/backend
+RUN npm install --no-optional || (sleep 5 && npm install --no-optional)
+
+# Copy frontend files and build
+WORKDIR /app/frontend
+COPY multaqa-frontend-main/multaqa-frontend-main/ ./
+RUN npm run build
 
 # Copy backend files
+WORKDIR /app/backend
 COPY multaqa-backend-main/multaqa-backend-main/ ./
 
-# Copy built frontend from previous stage
-COPY --from=frontend-build /frontend-build/build ./public
+# Create public directory and copy frontend build
+RUN mkdir -p public
+RUN cp -r /app/frontend/build/* ./public/
 
-# Install additional required packages
+# Install additional packages
 RUN npm install express mongoose cors dotenv jsonwebtoken bcryptjs path --save
 
-# Configure server to serve frontend and API
+# Add code to serve static files
 RUN echo 'const path = require("path");' >> index.js
 RUN echo 'app.use(express.static("public"));' >> index.js
-RUN echo 'app.get("*", (req, res) => {' >> index.js
+RUN echo 'app.get("*", (req, res, next) => {' >> index.js
 RUN echo '  if (req.path.startsWith("/api")) return next();' >> index.js
 RUN echo '  res.sendFile(path.join(__dirname, "public", "index.html"));' >> index.js
 RUN echo '});' >> index.js
@@ -39,8 +48,8 @@ ENV PORT=8080
 ENV JWT_SECRET="multaqa-secret-key"
 ENV NODE_ENV=production
 
-# Expose the port
+# Expose port
 EXPOSE 8080
 
-# Start the server
+# Start server
 CMD ["node", "index.js"]
