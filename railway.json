@@ -6,7 +6,7 @@
   },
   "deploy": {
     "restartPolicyType": "ALWAYS",
-    "healthcheckPath": "/",
+    "healthcheckPath": "/health",
     "healthcheckTimeout": 10,
     "healthcheckInterval": 30,
     "port": 8080
